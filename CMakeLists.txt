@@ -87,7 +87,7 @@ endif()
 find_package(OpenSSL REQUIRED)
 
 # Mandatory: KF5I18n (only for ki18n_install)
-find_package(KF5I18n REQUIRED)
+#find_package(KF5I18n)
 
 # Optional: GnomeKeyring
 find_package(PkgConfig)
