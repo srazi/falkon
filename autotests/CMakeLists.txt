@@ -35,3 +35,8 @@ falkon_tests(
     databasepasswordbackendtest
     databaseencryptedpasswordbackendtest
 )
+
+# Mandatory: OpenSSL
+find_package(OpenSSL REQUIRED)
+include_directories(${OPENSSL_INCLUDE_DIR})
+target_link_libraries(databaseencryptedpasswordbackendtest ${OPENSSL_CRYPTO_LIBRARY})
