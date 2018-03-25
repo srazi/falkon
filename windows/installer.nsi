@@ -61,6 +61,7 @@ SetCompressor /SOLID /FINAL lzma
 ;;;
 Page custom InstallationModePage InstallationModeLeave
 ;;;
+!define MUI_PAGE_CUSTOMFUNCTION_PRE "SkipComponentsIfPortableInstalltion"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 ;;;
@@ -582,3 +583,7 @@ FunctionEnd
 Function installationInfoLeave
 FunctionEnd
 
+Function SkipComponentsIfPortableInstalltion
+StrCmp $installAsPortable "YES" 0 +2
+    Abort
+FunctionEnd 
