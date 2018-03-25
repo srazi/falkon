@@ -540,8 +540,8 @@ FunctionEnd
 Function InstallationModePage
     !insertmacro MUI_HEADER_TEXT "$(TITLE_InstallationMode)" "$(DESC_InstallationMode)"
 
-    WriteINIStr "$PLUGINSDIR\portable-mode.ini" "Field 2" "Text" "$(TITLE_StandardInstallation)"
-    WriteINIStr "$PLUGINSDIR\portable-mode.ini" "Field 3" "Text" "$(TITLE_PortableInstallation)"
+    WriteINIStr "$PLUGINSDIR\portable-mode.ini" "Field 1" "Text" "$(TITLE_StandardInstallation)"
+    WriteINIStr "$PLUGINSDIR\portable-mode.ini" "Field 2" "Text" "$(TITLE_PortableInstallation)"
     ; set layout direction
     WriteINIStr "$PLUGINSDIR\portable-mode.ini" "Settings" "RTL" $(^RTL)
 
@@ -549,7 +549,7 @@ Function InstallationModePage
 FunctionEnd
 
 Function InstallationModeLeave
-  ReadINIStr $0 "$PLUGINSDIR\portable-mode.ini" "Field 3" "State"
+  ReadINIStr $0 "$PLUGINSDIR\portable-mode.ini" "Field 2" "State"
 
   StrCmp $0 1 0 notchecked
   StrCpy $installAsPortable "YES"
@@ -569,10 +569,10 @@ Function installationInfoPage
     WriteINIStr "$PLUGINSDIR\portable-info.ini" "Settings" "RTL" $(^RTL)
 
     StrCmp $installAsPortable "NO" 0 infoPortable
-
     WriteINIStr "$PLUGINSDIR\portable-info.ini" "Field 1" "Text" "$(DESC_StandardInstallation)"
 
     Goto showInfo
+
 infoPortable:
     WriteINIStr "$PLUGINSDIR\portable-info.ini" "Field 1" "Text" "$(DESC_PortableInstallation)"
 
@@ -586,4 +586,4 @@ FunctionEnd
 Function SkipComponentsIfPortableInstalltion
 StrCmp $installAsPortable "YES" 0 +2
     Abort
-FunctionEnd 
+FunctionEnd
