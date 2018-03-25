@@ -32,11 +32,8 @@
 !include /NONFATAL WinVer.nsh
 !include x64.nsh
 
-!ifndef PORTABLE
-  RequestExecutionLevel admin
-!else
-  RequestExecutionLevel user
-!endif
+Var installAsPortable
+RequestExecutionLevel admin
 
 !addplugindir "wininstall\"
 
@@ -61,8 +58,14 @@ SetCompressor /SOLID /FINAL lzma
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE ${FALKON_BIN_DIR}\COPYRIGHT.txt
+;;;
+Page custom SetAsPortableAppPage SetAsPortableAppLeave
+;;;
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
+;;;
+Page custom installationInfoPage installationInfoLeave
+;;;
 !insertmacro MUI_PAGE_INSTFILES
 
 !define MUI_FINISHPAGE_RUN
@@ -198,9 +201,18 @@ notRunning:
   ; in some packages *.bdic files use dash '-' instead of underline '_' followed by a version number. e.g. en-US-3-0.bdic
   File "${QTWEBENGINE_DICTIONARIES_DIR}\en*US*.bdic"
 
-  !ifndef PORTABLE
-    call RegisterCapabilities
-  !endif
+  call RegisterCapabilities
+
+  StrCmp $installAsPortable "YES" 0 skipPortableMode
+  FileOpen $0 $INSTDIR\settings.ini w
+  StrCmp $0 "" 0 closeHandle
+  MessageBox MB_OK|MB_ICONEXCLAMATION $(MSG_PortableWriteError)
+  goto skipPortableMode
+
+closeHandle:
+  FileClose $0
+
+skipPortableMode:
 SectionEnd
 
 SectionGroup $(TITLE_SecThemes) SecThemes
@@ -247,20 +259,20 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SecMain} $(DESC_SecMain)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecTranslations} $(DESC_SecTranslations)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecPlugins} $(DESC_SecPlugins)
-  !ifndef PORTABLE
+
+  StrCmp $installAsPortable "NO" 0 isPortable1
     !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} $(DESC_SecDesktop)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecExtensions} $(DESC_SecExtensions)
-  !endif
+
+isPortable1:
   !insertmacro MUI_DESCRIPTION_TEXT ${SecThemes} $(DESC_SecThemes)
 
-  !ifndef PORTABLE
+  StrCmp $installAsPortable "NO" 0 isPortable2
     !insertmacro MUI_DESCRIPTION_TEXT ${SecSetASDefault} $(DESC_SecSetASDefault)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecProtocols} $(DESC_SecProtocols)
-  !endif
+isPortable2:
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
-
-!ifndef PORTABLE
     SectionGroup $(TITLE_SecSetASDefault) SecSetASDefault
         Section $(TITLE_SecExtensions) SecExtensions
           SetOutPath "$INSTDIR"
@@ -278,20 +290,25 @@ SectionEnd
     SectionGroupEnd
 
     Section -StartMenu
+      StrCmp $installAsPortable "NO" 0 skipStartMenu
       SetOutPath "$INSTDIR"
       SetShellVarContext all
       CreateDirectory "$SMPROGRAMS\Falkon"
       CreateShortCut "$SMPROGRAMS\Falkon\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
       CreateShortCut "$SMPROGRAMS\Falkon\Falkon.lnk" "$INSTDIR\falkon.exe"
       CreateShortCut "$SMPROGRAMS\Falkon\License.lnk" "$INSTDIR\COPYRIGHT.txt"
+      skipStartMenu:
     SectionEnd
 
     Section $(TITLE_SecDesktop) SecDesktop
+      StrCmp $installAsPortable "NO" 0 skipDesktopIcon
       SetOutPath "$INSTDIR"
       CreateShortCut "$DESKTOP\Falkon.lnk" "$INSTDIR\falkon.exe" ""
+      skipDesktopIcon:
     SectionEnd
 
     Section -Uninstaller
+      StrCmp $installAsPortable "NO" 0 skipUninstaller
       WriteUninstaller "$INSTDIR\uninstall.exe"
       WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\falkon.exe"
       WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
@@ -305,6 +322,7 @@ SectionEnd
       WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "https://kde.org"
       ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
       WriteRegDWORD ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "EstimatedSize" "$0"
+      skipUninstaller:
     SectionEnd
 
     Section Uninstall
@@ -375,7 +393,6 @@ SectionEnd
       ${UnRegisterAssociation} "ftp" "FalkonURL" "$INSTDIR\falkon.exe" "protocol"
       ${UpdateSystemIcons}
     SectionEnd
-!endif
 
 BrandingText "${PRODUCT_NAME} ${PRODUCT_VERSION} Installer"
 
@@ -395,10 +412,6 @@ Function .onInit
             StrCpy $InstDir "$PROGRAMFILES\${PRODUCT_NAME}\"
           ${Endif}
         ${EndIf}
-
-        !ifdef PORTABLE
-            StrCpy $InstDir "$DESKTOP\${PRODUCT_NAME} Portable\"
-        !endif
 
         ;Prevent Multiple Instances
         System::Call 'kernel32::CreateMutexA(i 0, i 0, t "FalkonInstaller-4ECB4694-2C39-4f93-9122-A986344C4E7B") i .r1 ?e'
@@ -471,9 +484,16 @@ Function .onInit
         Pop $LANGUAGE
         StrCmp $LANGUAGE "cancel" 0 +2
                 Abort
+
+        ;Extract InstallOptions files
+        ;$PLUGINSDIR will automatically be removed when the installer closes
+        InitPluginsDir
+        File /oname=$PLUGINSDIR\portable-mode.ini "portable-mode.ini"
+        File /oname=$PLUGINSDIR\portable-info.ini "portable-info.ini"
 FunctionEnd
 
 Function RegisterCapabilities
+    StrCmp $installAsPortable "NO" 0 skipRegisterCapabilities
     !ifdef ___WINVER__NSH___
         ${If} ${AtLeastWinVista}
             ; even if we don't associate Falkon as default for ".htm" and ".html"
@@ -495,6 +515,7 @@ Function RegisterCapabilities
             WriteRegStr HKLM "SOFTWARE\RegisteredApplications" "${PRODUCT_NAME}" "${PRODUCT_CAPABILITIES_KEY}"
         ${EndIf}
     !endif
+skipRegisterCapabilities:
 FunctionEnd
 
 Function RunFalkonAsUser
@@ -511,3 +532,45 @@ Function un.onInit
         Abort
     found:
 FunctionEnd
+
+Function SetAsPortableAppPage
+    !insertmacro MUI_HEADER_TEXT "$(TITLE_PortableApp)" "$(DESC_PortableApp)"
+
+    WriteINIStr "$PLUGINSDIR\portable-mode.ini" "Field 1" "Text" "$(TITLE_InstallAsPortable)"
+
+    InstallOptions::dialog $PLUGINSDIR\portable-mode.ini
+FunctionEnd
+
+Function SetAsPortableAppLeave
+  ReadINIStr $0 "$PLUGINSDIR\portable-mode.ini" "Field 1" "State"
+
+  StrCmp $0 1 0 notchecked
+  StrCpy $installAsPortable "YES"
+  StrCpy $InstDir "$DESKTOP\${PRODUCT_NAME} Portable\"
+
+  goto skip
+
+ notchecked:
+  StrCpy $installAsPortable "NO"
+
+ skip:
+FunctionEnd
+
+Function installationInfoPage
+    !insertmacro MUI_HEADER_TEXT "$(TITLE_InstallInfo)" "$(DESC_InstallInfo)"
+
+    StrCmp $installAsPortable "NO" 0 infoPortable
+
+    WriteINIStr "$PLUGINSDIR\portable-info.ini" "Field 1" "Text" "$(DESC_InstallAsNonPortable)"
+
+    Goto showInfo
+infoPortable:
+    WriteINIStr "$PLUGINSDIR\portable-info.ini" "Field 1" "Text" "$(DESC_InstallAsPortable)"
+
+showInfo:
+    InstallOptions::dialog $PLUGINSDIR\portable-info.ini
+FunctionEnd
+
+Function installationInfoLeave
+FunctionEnd
+
