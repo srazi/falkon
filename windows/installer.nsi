@@ -204,7 +204,10 @@ notRunning:
   call RegisterCapabilities
 
   StrCmp $installAsPortable "YES" 0 skipPortableMode
-  FileOpen $0 $INSTDIR\settings.ini w
+  FileOpen $0 $INSTDIR\falkon.conf w
+  FileWrite $0 "[Config]$\r$\n"
+  FileWrite $0 "Portable=true$\r$\n"
+
   StrCmp $0 "" 0 closeHandle
   MessageBox MB_OK|MB_ICONEXCLAMATION $(MSG_PortableWriteError)
   goto skipPortableMode
