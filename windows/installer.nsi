@@ -540,6 +540,8 @@ Function SetAsPortableAppPage
     !insertmacro MUI_HEADER_TEXT "$(TITLE_PortableApp)" "$(DESC_PortableApp)"
 
     WriteINIStr "$PLUGINSDIR\portable-mode.ini" "Field 1" "Text" "$(TITLE_InstallAsPortable)"
+    ; set layout direction
+    WriteINIStr "$PLUGINSDIR\portable-mode.ini" "Settings" "RTL" $(^RTL)
 
     InstallOptions::dialog $PLUGINSDIR\portable-mode.ini
 FunctionEnd
@@ -561,6 +563,8 @@ FunctionEnd
 
 Function installationInfoPage
     !insertmacro MUI_HEADER_TEXT "$(TITLE_InstallInfo)" "$(DESC_InstallInfo)"
+    ; set layout direction
+    WriteINIStr "$PLUGINSDIR\portable-info.ini" "Settings" "RTL" $(^RTL)
 
     StrCmp $installAsPortable "NO" 0 infoPortable
 
