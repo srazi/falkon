@@ -59,7 +59,7 @@ SetCompressor /SOLID /FINAL lzma
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE ${FALKON_BIN_DIR}\COPYRIGHT.txt
 ;;;
-Page custom SetAsPortableAppPage SetAsPortableAppLeave
+Page custom InstallationModePage InstallationModeLeave
 ;;;
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
@@ -536,18 +536,19 @@ Function un.onInit
     found:
 FunctionEnd
 
-Function SetAsPortableAppPage
-    !insertmacro MUI_HEADER_TEXT "$(TITLE_PortableApp)" "$(DESC_PortableApp)"
+Function InstallationModePage
+    !insertmacro MUI_HEADER_TEXT "$(TITLE_InstallationMode)" "$(DESC_InstallationMode)"
 
-    WriteINIStr "$PLUGINSDIR\portable-mode.ini" "Field 1" "Text" "$(TITLE_InstallAsPortable)"
+    WriteINIStr "$PLUGINSDIR\portable-mode.ini" "Field 2" "Text" "$(TITLE_StandardInstallation)"
+    WriteINIStr "$PLUGINSDIR\portable-mode.ini" "Field 3" "Text" "$(TITLE_PortableInstallation)"
     ; set layout direction
     WriteINIStr "$PLUGINSDIR\portable-mode.ini" "Settings" "RTL" $(^RTL)
 
     InstallOptions::dialog $PLUGINSDIR\portable-mode.ini
 FunctionEnd
 
-Function SetAsPortableAppLeave
-  ReadINIStr $0 "$PLUGINSDIR\portable-mode.ini" "Field 1" "State"
+Function InstallationModeLeave
+  ReadINIStr $0 "$PLUGINSDIR\portable-mode.ini" "Field 3" "State"
 
   StrCmp $0 1 0 notchecked
   StrCpy $installAsPortable "YES"
@@ -568,11 +569,11 @@ Function installationInfoPage
 
     StrCmp $installAsPortable "NO" 0 infoPortable
 
-    WriteINIStr "$PLUGINSDIR\portable-info.ini" "Field 1" "Text" "$(DESC_InstallAsNonPortable)"
+    WriteINIStr "$PLUGINSDIR\portable-info.ini" "Field 1" "Text" "$(DESC_StandardInstallation)"
 
     Goto showInfo
 infoPortable:
-    WriteINIStr "$PLUGINSDIR\portable-info.ini" "Field 1" "Text" "$(DESC_InstallAsPortable)"
+    WriteINIStr "$PLUGINSDIR\portable-info.ini" "Field 1" "Text" "$(DESC_PortableInstallation)"
 
 showInfo:
     InstallOptions::dialog $PLUGINSDIR\portable-info.ini
