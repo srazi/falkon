@@ -279,17 +279,21 @@ isPortable2:
 
     SectionGroup $(TITLE_SecSetASDefault) SecSetASDefault
         Section $(TITLE_SecExtensions) SecExtensions
+          StrCmp $installAsPortable "NO" 0 skipSetExtentions
           SetOutPath "$INSTDIR"
           ${RegisterAssociation} ".htm" "$INSTDIR\falkon.exe" "FalkonHTML" "Falkon HTML Document" "$INSTDIR\falkon.exe,1" "file"
           ${RegisterAssociation} ".html" "$INSTDIR\falkon.exe" "FalkonHTML" "Falkon HTML Document" "$INSTDIR\falkon.exe,1" "file"
           ${UpdateSystemIcons}
+          skipSetExtentions:
         SectionEnd
 
         Section $(TITLE_SecProtocols) SecProtocols
+          StrCmp $installAsPortable "NO" 0 skipSecProtocols
           ${RegisterAssociation} "http" "$INSTDIR\falkon.exe" "FalkonURL" "Falkon URL" "$INSTDIR\falkon.exe,0" "protocol"
           ${RegisterAssociation} "https" "$INSTDIR\falkon.exe" "FalkonURL" "Falkon URL" "$INSTDIR\falkon.exe,0" "protocol"
           ${RegisterAssociation} "ftp" "$INSTDIR\falkon.exe" "FalkonURL" "Falkon URL" "$INSTDIR\falkon.exe,0" "protocol"
           ${UpdateSystemIcons}
+          skipSecProtocols:
         SectionEnd
     SectionGroupEnd
 
