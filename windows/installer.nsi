@@ -264,17 +264,12 @@ SectionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${SecTranslations} $(DESC_SecTranslations)
   !insertmacro MUI_DESCRIPTION_TEXT ${SecPlugins} $(DESC_SecPlugins)
 
-  StrCmp $installAsPortable "NO" 0 isPortable1
     !insertmacro MUI_DESCRIPTION_TEXT ${SecDesktop} $(DESC_SecDesktop)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecExtensions} $(DESC_SecExtensions)
 
-isPortable1:
   !insertmacro MUI_DESCRIPTION_TEXT ${SecThemes} $(DESC_SecThemes)
-
-  StrCmp $installAsPortable "NO" 0 isPortable2
     !insertmacro MUI_DESCRIPTION_TEXT ${SecSetASDefault} $(DESC_SecSetASDefault)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecProtocols} $(DESC_SecProtocols)
-isPortable2:
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
     SectionGroup $(TITLE_SecSetASDefault) SecSetASDefault
